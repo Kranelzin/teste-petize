@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Detalhes do Pedido</title>
+    <meta charset="UTF-8"/>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+
+    <script>
+        let intervalId;
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            function verificarStatusPedido() {
+                fetch('/verificarStatusPedido')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'pronto') {
+                            obterPedidos();
+                            clearInterval(intervalId);
+                        } else {
+                            console.log('Pedido ainda não está pronto.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao verificar o status do pedido:', error);
+                    });
+            }
+
+
+            function obterPedidos() {
+                fetch('/getPedidos')
+                    .then(response => response.json())
+                    .then(pedidos => {
+                        exibirPedidos(pedidos);
+                    })
+                    .catch(error => {
+                        console.error('Erro ao obter a lista de pedidos:', error);
+                    });
+            }
+
+
+            function exibirPedidos(pedidos) {
+                const pedidosContainer = document.getElementById('pedidos-container');
+                if (pedidos.length === 0) {
+                    pedidosContainer.innerHTML = 'Nenhum pedido encontrado.';
+                    return;
+                }
+
+                let pedidosHtml = '<h2>Lista de Pedidos</h2><table><thead><tr><th>ID</th><th>Data</th><th>Quantidade de itens</th><th>Status</th></tr></thead><tbody>';
+
+                pedidos.forEach(pedido => {
+                    pedidosHtml += `<tr><td>${pedido.pedidoId}</td><td>${pedido.dataPedido}</td><td>${pedido.quantidadeItens}</td><td>${pedido.statusPedido}</td></tr>`;
+                });
+
+                pedidosHtml += '</tbody></table>';
+                pedidosContainer.innerHTML = pedidosHtml;
+            }
+
+            verificarStatusPedido();
+
+            intervalId = setInterval(verificarStatusPedido, 2000);
+        });
+    </script>
+</head>
+<body>
+<h1>Detalhes do Pedido</h1>
+
+<div id="pedidos-container"></div>
+
+</body>
+</html>

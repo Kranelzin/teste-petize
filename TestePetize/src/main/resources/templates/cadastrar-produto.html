@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Cadastro de Produto</title>
+    <meta charset="UTF-8"/>
+
+    <div id="status-container"></div>
+
+    <div id="produtos-container"></div>
+
+    <script>
+        function verificarStatus() {
+            fetch('/statusBuscaProdutos')
+                .then(response => response.json())
+                .then(data => {
+                    const statusContainer = document.getElementById('status-container');
+                    if (data.status === 'pronto') {
+                        statusContainer.textContent = 'Produtos estão prontos!';
+                        atualizarListaProdutos();
+                    } else {
+                        statusContainer.textContent = 'Ainda buscando produtos...';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao verificar status:', error);
+                });
+        }
+
+        function atualizarListaProdutos() {
+            fetch('/getProdutos')
+                .then(response => response.json())
+                .then(data => {
+                    const produtosContainer = document.getElementById('produtos-container');
+                    produtosContainer.innerHTML = '';
+
+                    data.forEach(produto => {
+                        const produtoDiv = document.createElement('div');
+                        produtoDiv.innerHTML = `
+                            <p><strong>Nome:</strong> ${produto.nome}</p>
+                            <p><strong>Descrição:</strong> ${produto.descricao}</p>
+                            <p><strong>Preço:</strong> ${produto.preco}</p>
+                            <button onclick="deletarProduto('${produto.id}')">Deletar</button>
+                            <hr/>
+                        `;
+                        produtosContainer.appendChild(produtoDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao obter produtos:', error);
+                });
+        }
+
+         function deletarProduto(produtoId) {
+            fetch(`/deletarProduto/${produtoId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    atualizarListaProdutos();
+                } else {
+                    console.error('Erro ao deletar produto:', response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao deletar produto:', error);
+            });
+        }
+
+        setInterval(verificarStatus, 2000);
+    </script>
+</head>
+<body>
+<h1>Cadastro de Pedido</h1>
+
+<form th:action="@{/cadastrarProduto}" th:object="${produto}" method="post">
+    <label>Nome do Produto:</label>
+    <input type="text" th:field="*{nome}" required/>
+    <br/>
+
+    <label>Descrição do Produto:</label>
+    <input type="text" th:field="*{descricao}" required/>
+    <br/>
+
+    <label>Preço do Produto:</label>
+    <input type="text" th:field="*{preco}" required/>
+    <br/>
+
+    <button type="submit">Adicionar Produto</button>
+</form>
+
+</body>
+</html>
